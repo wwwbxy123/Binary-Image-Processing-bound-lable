@@ -15,11 +15,11 @@ VXparam_t par[] =             /* command line structure            */
 #define  OVAL   par[1].val
 /*void lmax(int, int); */
 /* Blanca add the declaration of setlable function */
-void setlable(int, int, int);
+void setlabel(int, int, int);
 
 Vfstruct (im);                      /* i/o image structure          */
 Vfstruct (tm);                      /* temp image structure         */
-
+Vfstruct (vm);
 main(argc, argv)
 int argc;
 char *argv[];
@@ -29,6 +29,7 @@ int        y,x;                     /* index counters               */
 
   Vfread(&im, IVAL);                /* read image file              */
   Vfembed(&tm, &im, 1,1,1,1);       /* image structure with border  */
+  Vfembed(&vm, &im, 1,1,1,1);
   if ( im.type != VX_PBYTE ) {      /* check image format           */
      fprintf(stderr, "vtemp: no byte image data in input file\n");
      exit(-1);
@@ -44,20 +45,27 @@ int        y,x;                     /* index counters               */
    /* preset all pixels in im to 0 implies unlabled */
    for (y = im.ylo ; y <= im.yhi ; y++){
      for (x = im.xlo ; x <= im.xhi ; x++){
-       im.u[y][x] = 0;
+       vm.u[y][x] = 0;
      }
    }
    
    /* when meet object and check isunlabled in im, then use lable function to lable it    */
-   int i = 1;
-   for (y = tm.ylo ; y <= tm.yhi ; y++){
-     for(x = tm.ylo ; x <= tm.xhi ; x++){
-       if(tm.u[y][x] != 0 && im.u[y + 1][x + 1] == 0){
-         setlable(x, y, i);
-         i++;
-       }
+   int i = 20;
+   for (y = im.ylo ; y <= im.yhi ; y++){
+     for(x = im.ylo ; x <= im.xhi ; x++){
+       if(tm.u[y][x] != 0 && vm.u[y][x] == 0){
+         setlabel(y, x, i);
+         i=i+30;
+       
      }
-   }
+}
+}
+
+ for (y = im.ylo ; y <= im.yhi ; y++){
+     for(x = im.ylo ; x <= im.xhi ; x++){
+	im.u[y][x] = vm.u[y][x];
+	}
+}
    //Blanca's code -->
 
    Vfwrite(&im, OVAL);             /* write image file                */
@@ -77,20 +85,20 @@ int        y,x;                     /* index counters               */
 */
 
 //<-- Blanca's code
-/* setlable(x, y, l) function here   */
-void setlable(int x, int y, int l){
-  im.u[x][y] = l;
-  if(im.u[x][y + 1] == 0 && tm.u[x][y + 1] != 0){
-    setlable(x, y + 1, l);
+/* setlabel(y, x, h) function here   */
+void setlabel(int y, int x, int h){
+  vm.u[y][x] = h;
+  if(vm.u[y][x + 1] == 0 && tm.u[y][x + 1] != 0){
+    setlabel(y, x + 1, h);
+  } 
+  if(vm.u[y][x - 1] == 0 && tm.u[y][x - 1] != 0){
+    setlabel(y, x - 1, h);
   }
-  else if(im.u[x][y - 1] == 0 && tm.u[x][y - 1] != 0){
-    setlable(x, y - 1, l);
+  if(vm.u[y - 1][x] == 0 && tm.u[y - 1][x] != 0){
+    setlabel(y - 1, x, h);
   }
-  else if(im.u[x - 1][y] == 0 && tm.u[x - 1][y] != 0){
-    setlable(x - 1, y, l);
-  }
-  else if(im.u[x + 1][y] == 0 && tm.u[x + 1][y] != 0){
-    setlable(x + 1, y, l);
+  if(vm.u[y + 1][x] == 0 && tm.u[y + 1][x] != 0){
+    setlabel(y + 1, x, h);
   }
 }
 
